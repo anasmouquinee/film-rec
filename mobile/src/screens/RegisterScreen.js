@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ImageBackground } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { API_BASE_URL } from '../config';
 
 const RegisterScreen = ({ navigation }) => {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
-    const API_URL = 'http://192.168.11.106:3000/api';
+    const API_URL = API_BASE_URL;
 
     const handleRegister = async () => {
         try {

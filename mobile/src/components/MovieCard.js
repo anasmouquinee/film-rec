@@ -2,13 +2,21 @@ import React from 'react';
 import { View, Text, Image, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
-const MovieCard = ({ movie, onLike }) => {
+const MovieCard = ({ movie, onLike, onPress }) => {
+    // Optimistic UI for like
+    const [liked, setLiked] = React.useState(false);
+
     const imageUrl = movie.poster_path
         ? `https://image.tmdb.org/t/p/w500${movie.poster_path}`
         : 'https://via.placeholder.com/150';
 
+    const handleLike = () => {
+        setLiked(!liked);
+        onLike(movie);
+    };
+
     return (
-        <View style={styles.card}>
+        <TouchableOpacity style={styles.card} onPress={onPress}>
             <Image source={{ uri: imageUrl }} style={styles.image} />
             <View style={styles.info}>
                 <Text style={styles.title} numberOfLines={1}>{movie.title}</Text>
@@ -16,12 +24,16 @@ const MovieCard = ({ movie, onLike }) => {
                     <Text style={styles.rating}>
                         <Ionicons name="star" size={12} color="#FFD700" /> {movie.vote_average}
                     </Text>
-                    <TouchableOpacity onPress={() => onLike(movie)}>
-                        <Ionicons name="heart-outline" size={20} color="white" />
+                    <TouchableOpacity onPress={handleLike}>
+                        <Ionicons
+                            name={liked ? "heart" : "heart-outline"}
+                            size={20}
+                            color={liked ? "#E50914" : "white"}
+                        />
                     </TouchableOpacity>
                 </View>
             </View>
-        </View>
+        </TouchableOpacity>
     );
 };
 

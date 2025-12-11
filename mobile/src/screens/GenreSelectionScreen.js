@@ -2,12 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, FlatList, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { API_BASE_URL } from '../config';
 
 const GenreSelectionScreen = ({ navigation, route }) => {
     const { userId } = route.params;
     const [genres, setGenres] = useState([]);
     const [selectedGenres, setSelectedGenres] = useState([]);
-    const API_URL = 'http://192.168.11.106:3000/api';
+    const API_URL = API_BASE_URL;
 
     useEffect(() => {
         fetchGenres();

@@ -2,10 +2,11 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, FlatList, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import MovieCard from '../components/MovieCard';
+import { API_BASE_URL } from '../config';
 
-const RecommendationScreen = ({ userId }) => {
+const RecommendationScreen = ({ userId, navigation }) => {
     const [recommendations, setRecommendations] = useState([]);
-    const API_URL = 'http://192.168.11.106:3000/api';
+    const API_URL = API_BASE_URL;
 
     useEffect(() => {
         // In a real app, userId would come from context or props
@@ -31,7 +32,11 @@ const RecommendationScreen = ({ userId }) => {
                 data={recommendations}
                 keyExtractor={(item) => item.id.toString()}
                 renderItem={({ item }) => (
-                    <MovieCard movie={item} onLike={() => { }} />
+                    <MovieCard
+                        movie={item}
+                        onLike={() => { }}
+                        onPress={() => navigation.navigate('MovieDetail', { movieId: item.id })}
+                    />
                 )}
                 numColumns={2}
                 contentContainerStyle={styles.list}

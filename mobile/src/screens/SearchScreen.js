@@ -2,11 +2,12 @@ import React, { useState } from 'react';
 import { View, TextInput, FlatList, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import MovieCard from '../components/MovieCard';
+import { API_BASE_URL } from '../config';
 
-const SearchScreen = () => {
+const SearchScreen = ({ navigation }) => {
     const [query, setQuery] = useState('');
     const [results, setResults] = useState([]);
-    const API_URL = 'http://192.168.11.106:3000/api';
+    const API_URL = API_BASE_URL;
 
     const handleSearch = async (text) => {
         setQuery(text);
@@ -50,7 +51,13 @@ const SearchScreen = () => {
             <FlatList
                 data={results}
                 keyExtractor={(item) => item.id.toString()}
-                renderItem={({ item }) => <MovieCard movie={item} onLike={handleLike} />}
+                renderItem={({ item }) => (
+                    <MovieCard
+                        movie={item}
+                        onLike={handleLike}
+                        onPress={() => navigation.navigate('MovieDetail', { movieId: item.id })}
+                    />
+                )}
                 numColumns={2}
                 contentContainerStyle={styles.list}
             />

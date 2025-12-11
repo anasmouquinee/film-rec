@@ -69,10 +69,22 @@ app.post('/api/user/preference', async (req, res) => {
     });
 
     // 2. Link Genres
-    if (movie.genre_ids) {
+    // 2. Link Genres
+    if (movie.genres) {
+      for (const g of movie.genres) {
+        await session.run(`
+          MERGE (gen:Genre {id: $id})
+          SET gen.name = $name
+          WITH gen
+          MATCH (m:Film {id: $movieId})
+          MERGE (m)-[:BELONGS_TO]->(gen)
+        `, { id: g.id, name: g.name, movieId: movie.id });
+      }
+    } else if (movie.genre_ids) {
       for (const genreId of movie.genre_ids) {
         await session.run(`
           MERGE (g:Genre {id: $genreId})
+          WITH g
           MATCH (m:Film {id: $movieId})
           MERGE (m)-[:BELONGS_TO]->(g)
         `, { genreId, movieId: movie.id });
@@ -82,6 +94,7 @@ app.post('/api/user/preference', async (req, res) => {
     // 3. Create LIKE relationship
     await session.run(`
       MERGE (u:User {id: $userId})
+      WITH u
       MATCH (m:Film {id: $movieId})
       MERGE (u)-[:LIKES]->(m)
     `, { userId, movieId: movie.id });
@@ -144,12 +157,30 @@ app.post('/api/auth/login', async (req, res) => {
   }
 });
 
-// Get Genres
+// Get Genres (Seed if empty)
 app.get('/api/genres', async (req, res) => {
   const session = driver.session();
   try {
     const result = await session.run(`MATCH (g:Genre) RETURN g ORDER BY g.name`);
-    const genres = result.records.map(record => record.get('g').properties);
+    let genres = result.records.map(record => record.get('g').properties);
+
+    if (genres.length === 0 || genres.some(g => !g.name)) {
+      console.log('Seeding genres from TMDB...');
+      const TMDB_API_KEY = process.env.TMDB_API_KEY;
+      const response = await fetch(`https://api.themoviedb.org/3/genre/movie/list?api_key=${TMDB_API_KEY}&language=en-US`);
+      const data = await response.json();
+
+      if (data.genres) {
+        for (const g of data.genres) {
+          await session.run(`
+            MERGE (gen:Genre {id: $id})
+            SET gen.name = $name
+          `, { id: g.id, name: g.name });
+        }
+        genres = data.genres;
+      }
+    }
+
     res.json(genres);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -171,6 +202,25 @@ app.post('/api/user/genres', async (req, res) => {
       `, { userId, genreId });
     }
     res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  } finally {
+    await session.close();
+  }
+});
+
+
+// Get User Likes
+app.get('/api/user/likes/:userId', async (req, res) => {
+  const { userId } = req.params;
+  const session = driver.session();
+  try {
+    const result = await session.run(`
+      MATCH (u:User {id: $userId})-[:LIKES]->(m:Film)
+      RETURN m
+    `, { userId });
+    const movies = result.records.map(record => record.get('m').properties);
+    res.json(movies);
   } catch (error) {
     res.status(500).json({ error: error.message });
   } finally {
@@ -224,6 +274,42 @@ app.get('/api/search', async (req, res) => {
     const response = await fetch(url);
     const data = await response.json();
     res.json(data.results || []);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Get Movie Details (TMDB Proxy)
+app.get('/api/movie/:id', async (req, res) => {
+  const { id } = req.params;
+  const TMDB_API_KEY = process.env.TMDB_API_KEY;
+  const url = `https://api.themoviedb.org/3/movie/${id}?api_key=${TMDB_API_KEY}&language=en-US&append_to_response=credits,videos,similar,recommendations`;
+
+  try {
+    const response = await fetch(url);
+    const data = await response.json();
+    res.json(data);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+
+
+// Discover Movies (TMDB Proxy)
+app.get('/api/discover', async (req, res) => {
+  const TMDB_API_KEY = process.env.TMDB_API_KEY;
+  const { sort_by, with_genres } = req.query;
+
+  let url = `https://api.themoviedb.org/3/discover/movie?api_key=${TMDB_API_KEY}&language=en-US&include_adult=false&include_video=false&page=1`;
+
+  if (sort_by) url += `&sort_by=${sort_by}`;
+  if (with_genres) url += `&with_genres=${with_genres}`;
+
+  try {
+    const response = await fetch(url);
+    const data = await response.json();
+    res.json(data);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
