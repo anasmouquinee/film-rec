@@ -5,6 +5,7 @@ const LOCAL_URI = 'neo4j://127.0.0.1:7687';
 const LOCAL_USER = 'neo4j';
 const LOCAL_PASSWORD = 'anaskaelar';
 
+
 const AURA_URI = process.env.NEO4J_URI;
 const AURA_USER = process.env.NEO4J_USER;
 const AURA_PASSWORD = process.env.NEO4J_PASSWORD;
@@ -21,7 +22,7 @@ const migrate = async () => {
         console.log(`From (Local): ${LOCAL_URI}`);
         console.log(`To   (Aura): ${AURA_URI.substring(0, 20)}...`);
 
-        // --- 1. Migrate ALL Genres ---
+        // --- 1. Migrate tous les genres---
         console.log('Migrating ALL Genres...');
         const genres = await localSession.run('MATCH (g:Genre) RETURN g');
         let genreCount = 0;
@@ -35,7 +36,7 @@ const migrate = async () => {
         }
         console.log(`Migrated ${genreCount} Genres.`);
 
-        // --- 2. Migrate ALL Films ---
+        // --- 2. Migrate tous les films ---
         console.log('Migrating ALL Films...');
         const films = await localSession.run('MATCH (f:Film) RETURN f');
         let filmCount = 0;
@@ -60,7 +61,7 @@ const migrate = async () => {
         }
         console.log(`Migrated ${filmCount} Films.`);
 
-        // --- 3. Migrate Film-Genre Relationships (BELONGS_TO) ---
+        // --- 3. Migrate Film-Genre Relationships  ---
         console.log('Migrating Film-Genre Relationships...');
         const fgRels = await localSession.run('MATCH (f:Film)-[:BELONGS_TO]->(g:Genre) RETURN f.id as filmId, g.id as genreId');
         let fgCount = 0;
@@ -74,7 +75,7 @@ const migrate = async () => {
         }
         console.log(`Migrated ${fgCount} BELONGS_TO relationships.`);
 
-        // --- 4. Migrate Users ---
+        // --- 4. Migrate tous les utilisateurs ---
         console.log('Migrating Users...');
         const users = await localSession.run('MATCH (u:User) RETURN u');
         let userCount = 0;
@@ -93,7 +94,7 @@ const migrate = async () => {
         }
         console.log(`Migrated ${userCount} Users.`);
 
-        // --- 5. Migrate User Likes (LIKES) ---
+        // --- 5. Migrate User Likes ---
         console.log('Migrating User Likes...');
         const likes = await localSession.run('MATCH (u:User)-[:LIKES]->(f:Film) RETURN u.id as userId, f.id as filmId');
         let likeCount = 0;

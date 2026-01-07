@@ -28,7 +28,7 @@ const MovieCard = ({ movie, onLike, onPress }) => {
                         <Ionicons
                             name={liked ? "heart" : "heart-outline"}
                             size={20}
-                            color={liked ? "#E50914" : "white"}
+                            color={liked ? "#00C2FF" : "white"}
                         />
                     </TouchableOpacity>
                 </View>
@@ -41,9 +41,11 @@ const styles = StyleSheet.create({
     card: {
         width: 160,
         margin: 8,
-        backgroundColor: '#1a1a1a',
-        borderRadius: 8,
+        backgroundColor: '#151F38',
+        borderRadius: 12,
         overflow: 'hidden',
+        borderWidth: 1,
+        borderColor: '#2A3B55',
     },
     image: {
         width: '100%',
@@ -65,7 +67,7 @@ const styles = StyleSheet.create({
     },
     rating: {
         fontSize: 12,
-        color: '#aaa',
+        color: '#8899A6',
     },
 });
 

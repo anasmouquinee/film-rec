@@ -86,7 +86,7 @@ const GenreSelectionScreen = ({ navigation, route }) => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#000',
+        backgroundColor: '#050A18',
         padding: 20,
     },
     header: {
@@ -98,7 +98,7 @@ const styles = StyleSheet.create({
     },
     subHeader: {
         fontSize: 16,
-        color: '#aaa',
+        color: '#8899A6',
         marginBottom: 30,
         textAlign: 'center',
     },
@@ -110,18 +110,18 @@ const styles = StyleSheet.create({
         height: 100,
         margin: 5,
         borderRadius: 50,
-        backgroundColor: '#333',
+        backgroundColor: '#151F38',
         justifyContent: 'center',
         alignItems: 'center',
         borderWidth: 2,
         borderColor: 'transparent',
     },
     selectedGenre: {
-        backgroundColor: '#E50914',
-        borderColor: 'white',
+        backgroundColor: 'rgba(0, 194, 255, 0.2)',
+        borderColor: '#00C2FF',
     },
     genreText: {
-        color: 'white',
+        color: '#CBD5E1',
         fontWeight: 'bold',
         fontSize: 12,
         textAlign: 'center',
@@ -135,17 +135,17 @@ const styles = StyleSheet.create({
         right: 5,
     },
     button: {
-        backgroundColor: '#E50914',
+        backgroundColor: '#00C2FF',
         padding: 15,
-        borderRadius: 5,
+        borderRadius: 12,
         alignItems: 'center',
         marginTop: 20,
     },
     disabledButton: {
-        backgroundColor: '#555',
+        backgroundColor: '#1E293B',
     },
     buttonText: {
-        color: 'white',
+        color: '#050A18',
         fontSize: 18,
         fontWeight: 'bold',
     },

@@ -2,7 +2,7 @@ const neo4j = require('neo4j-driver');
 require('dotenv').config();
 
 // 1. Local Database Config (Source)
-// Using credentials found in the original .env file
+
 const LOCAL_URI = 'neo4j://127.0.0.1:7687';
 const LOCAL_USER = 'neo4j';
 const LOCAL_PASSWORD = 'anaskaelar';
@@ -17,7 +17,7 @@ const localDriver = neo4j.driver(LOCAL_URI, neo4j.auth.basic(LOCAL_USER, LOCAL_P
 const auraDriver = neo4j.driver(AURA_URI, neo4j.auth.basic(AURA_USER, AURA_PASSWORD));
 
 const migrate = async () => {
-    // Verify Connectivity
+    // Verify Connections
     try {
         await localDriver.verifyConnectivity();
         console.log('✅ Connected to LOCAL');
@@ -42,7 +42,7 @@ const migrate = async () => {
         console.log(`From (Local): ${LOCAL_URI}`);
         console.log(`To   (Aura): ${AURA_URI.substring(0, 20)}...`);
 
-        // --- 1. Migrate Users ---
+        // --- 1. Migrate les utilisateurs ---
         console.log('Migrating Users...');
         let users;
         try {
@@ -67,15 +67,15 @@ const migrate = async () => {
                 });
             } catch (e) {
                 console.error(`❌ FAILED to WRITE User ${u.username} to AURA:`, e.message, e.code);
-                // Continue despite single user failure? Maybe not.
+                // contineue in case of failur with a user
                 throw e;
             }
             userCount++;
         }
         console.log(`Migrated ${userCount} Users.`);
 
-        // --- 2. Migrate Films that Users Like ---
-        // (We assume seeded films might check coverage, but let's ensure all user films exist)
+        // --- 2. Migrate Films liked by the user ---
+        // still need improvement
         console.log('Migrating Liked Films...');
         const likedFilms = await localSession.run('MATCH (u:User)-[:LIKES]->(f:Film) RETURN f');
         let filmCount = 0;
@@ -101,6 +101,7 @@ const migrate = async () => {
         console.log(`Ensured ${filmCount} Liked Films exist.`);
 
         // --- 3. Migrate LIKES Relationships ---
+        // still need improvement
         console.log('Migrating LIKES relationships...');
         const likes = await localSession.run('MATCH (u:User)-[:LIKES]->(f:Film) RETURN u.id as authorizedUserId, f.id as movieId');
         let likeCount = 0;
@@ -119,9 +120,7 @@ const migrate = async () => {
 
         // --- 4. Migrate LIKES_GENRE Relationships ---
         console.log('Migrating Genre Preferences...');
-        // First ensure genres exist (basic set) - usually 19 genres from TMDB
-        // We'll just copy the link if genres exist in Aura (which they should from seeding)
-        // Or we MERGE the genre just in case
+
         const userGenres = await localSession.run('MATCH (u:User)-[:LIKES_GENRE]->(g:Genre) RETURN u.id as userId, g.id as genreId, g.name as genreName');
         let genreCount = 0;
         for (const record of userGenres.records) {

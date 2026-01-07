@@ -16,18 +16,16 @@ import MovieDetailScreen from './src/screens/MovieDetailScreen';
 
 import ExploreScreen from './src/screens/ExploreScreen';
 import ProfileScreen from './src/screens/ProfileScreen';
+import { AuthProvider, useAuth } from './src/context/AuthContext';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 
-const AuthStack = ({ onLogin }) => (
+const AuthStack = () => (
   <Stack.Navigator screenOptions={{ headerShown: false }}>
-    <Stack.Screen name="Login">
-      {props => <LoginScreen {...props} onLogin={onLogin} />}
-    </Stack.Screen>
+    <Stack.Screen name="Login" component={LoginScreen} />
     <Stack.Screen name="Register" component={RegisterScreen} />
     <Stack.Screen name="GenreSelection" component={GenreSelectionScreen} />
-
   </Stack.Navigator>
 );
 
@@ -38,14 +36,35 @@ const HomeStack = () => (
   </Stack.Navigator>
 );
 
+import { Ionicons } from '@expo/vector-icons';
+
+// ...
+
 const AppTabs = () => (
   <Tab.Navigator
-    screenOptions={{
+    screenOptions={({ route }) => ({
       headerShown: false,
-      tabBarStyle: { backgroundColor: '#000', borderTopColor: '#333' },
-      tabBarActiveTintColor: '#E50914',
-      tabBarInactiveTintColor: '#aaa',
-    }}
+      tabBarStyle: { backgroundColor: '#050A18', borderTopColor: '#121B35' },
+      tabBarActiveTintColor: '#00C2FF',
+      tabBarInactiveTintColor: '#64748B',
+      tabBarIcon: ({ focused, color, size }) => {
+        let iconName;
+
+        if (route.name === 'Home') {
+          iconName = focused ? 'home' : 'home-outline';
+        } else if (route.name === 'Explore') {
+          iconName = focused ? 'compass' : 'compass-outline';
+        } else if (route.name === 'Search') {
+          iconName = focused ? 'search' : 'search-outline';
+        } else if (route.name === 'For You') {
+          iconName = focused ? 'sparkles' : 'sparkles-outline';
+        } else if (route.name === 'Profile') {
+          iconName = focused ? 'person' : 'person-outline';
+        }
+
+        return <Ionicons name={iconName} size={size} color={color} />;
+      },
+    })}
   >
     <Tab.Screen name="Home" component={HomeScreen} />
     <Tab.Screen name="Explore" component={ExploreScreen} />
@@ -56,19 +75,22 @@ const AppTabs = () => (
   </Tab.Navigator>
 );
 
-export default function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-
+const AppNav = () => {
+  const { user } = useAuth();
   return (
-    <SafeAreaProvider>
-      <StatusBar style="light" />
-      <NavigationContainer>
-        {isAuthenticated ? (
-          <HomeStack />
-        ) : (
-          <AuthStack onLogin={() => setIsAuthenticated(true)} />
-        )}
-      </NavigationContainer>
-    </SafeAreaProvider>
+    <NavigationContainer>
+      {user ? <HomeStack /> : <AuthStack />}
+    </NavigationContainer>
+  );
+};
+
+export default function App() {
+  return (
+    <AuthProvider>
+      <SafeAreaProvider>
+        <StatusBar style="light" />
+        <AppNav />
+      </SafeAreaProvider>
+    </AuthProvider>
   );
 }

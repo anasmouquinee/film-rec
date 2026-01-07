@@ -4,8 +4,10 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import MovieCard from '../components/MovieCard';
 import { API_BASE_URL } from '../config';
+import BackgroundLayout from '../components/BackgroundLayout';
 
 const ExploreScreen = ({ navigation }) => {
+    // ... existing state ...
     const [movies, setMovies] = useState([]);
     const [genres, setGenres] = useState([]);
     const [selectedGenres, setSelectedGenres] = useState([]); // Changed to array
@@ -30,8 +32,7 @@ const ExploreScreen = ({ navigation }) => {
     };
 
     const fetchMovies = async () => {
-        // Map genres to comma separated string (AND logic)
-        // For OR logic use pipe |, but usually standard filter is AND
+        // for the fetch and movies search
         const genreQuery = selectedGenres.length > 0 ? `&with_genres=${selectedGenres.join(',')}` : '';
         const sortQuery = `&sort_by=${sortBy}`;
         try {
@@ -59,88 +60,90 @@ const ExploreScreen = ({ navigation }) => {
     ];
 
     return (
-        <SafeAreaView style={styles.container}>
-            <View style={styles.header}>
-                <Text style={styles.headerTitle}>Explore</Text>
-                <TouchableOpacity onPress={() => setShowSortModal(true)}>
-                    <Ionicons name="filter" size={24} color="white" />
-                </TouchableOpacity>
-            </View>
-
-            {/* Genres Scroller */}
-            <View style={styles.genreContainer}>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.genreList}>
-                    <TouchableOpacity
-                        style={[styles.genreChip, selectedGenres.length === 0 && styles.selectedChip]}
-                        onPress={() => setSelectedGenres([])}
-                    >
-                        <Text style={[styles.genreText, selectedGenres.length === 0 && styles.selectedGenreText]}>All</Text>
+        <BackgroundLayout>
+            <SafeAreaView style={styles.container}>
+                <View style={styles.header}>
+                    <Text style={styles.headerTitle}>Explore</Text>
+                    <TouchableOpacity onPress={() => setShowSortModal(true)}>
+                        <Ionicons name="filter" size={24} color="white" />
                     </TouchableOpacity>
-                    {genres.map(g => (
+                </View>
+
+                {/* Genres Scroller */}
+                <View style={styles.genreContainer}>
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.genreList}>
                         <TouchableOpacity
-                            key={g.id}
-                            style={[styles.genreChip, selectedGenres.includes(g.id) && styles.selectedChip]}
-                            onPress={() => toggleGenre(g.id)}
+                            style={[styles.genreChip, selectedGenres.length === 0 && styles.selectedChip]}
+                            onPress={() => setSelectedGenres([])}
                         >
-                            <Text style={[styles.genreText, selectedGenres.includes(g.id) && styles.selectedGenreText]}>
-                                {g.name || 'Unknown'}
-                            </Text>
+                            <Text style={[styles.genreText, selectedGenres.length === 0 && styles.selectedGenreText]}>All</Text>
                         </TouchableOpacity>
-                    ))}
-                </ScrollView>
-            </View>
-
-            <FlatList
-                data={movies}
-                keyExtractor={(item) => item.id.toString()}
-                renderItem={({ item }) => (
-                    <MovieCard
-                        movie={item}
-                        onLike={() => { }}
-                        onPress={() => navigation.navigate('MovieDetail', { movieId: item.id })}
-                    />
-                )}
-                numColumns={2}
-                contentContainerStyle={styles.list}
-            />
-
-            {/* Sort Modal */}
-            <Modal visible={showSortModal} transparent animationType="slide">
-                <View style={styles.modalContainer}>
-                    <View style={styles.modalContent}>
-                        <Text style={styles.modalTitle}>Sort By</Text>
-                        {sortOptions.map(option => (
+                        {genres.map(g => (
                             <TouchableOpacity
-                                key={option.value}
-                                style={styles.sortOption}
-                                onPress={() => {
-                                    setSortBy(option.value);
-                                    setShowSortModal(false);
-                                }}
+                                key={g.id}
+                                style={[styles.genreChip, selectedGenres.includes(g.id) && styles.selectedChip]}
+                                onPress={() => toggleGenre(g.id)}
                             >
-                                <Text style={[styles.sortText, sortBy === option.value && styles.activeSortText]}>
-                                    {option.label}
+                                <Text style={[styles.genreText, selectedGenres.includes(g.id) && styles.selectedGenreText]}>
+                                    {g.name || 'Unknown'}
                                 </Text>
-                                {sortBy === option.value && <Ionicons name="checkmark" size={20} color="#E50914" />}
                             </TouchableOpacity>
                         ))}
-                        <TouchableOpacity
-                            style={styles.closeButton}
-                            onPress={() => setShowSortModal(false)}
-                        >
-                            <Text style={styles.closeText}>Close</Text>
-                        </TouchableOpacity>
-                    </View>
+                    </ScrollView>
                 </View>
-            </Modal>
-        </SafeAreaView>
+
+                <FlatList
+                    data={movies}
+                    keyExtractor={(item) => item.id.toString()}
+                    renderItem={({ item }) => (
+                        <MovieCard
+                            movie={item}
+                            onLike={() => { }}
+                            onPress={() => navigation.navigate('MovieDetail', { movieId: item.id })}
+                        />
+                    )}
+                    numColumns={2}
+                    contentContainerStyle={styles.list}
+                />
+
+                {/* Sort Modal */}
+                <Modal visible={showSortModal} transparent animationType="slide">
+                    <View style={styles.modalContainer}>
+                        <View style={styles.modalContent}>
+                            <Text style={styles.modalTitle}>Sort By</Text>
+                            {sortOptions.map(option => (
+                                <TouchableOpacity
+                                    key={option.value}
+                                    style={styles.sortOption}
+                                    onPress={() => {
+                                        setSortBy(option.value);
+                                        setShowSortModal(false);
+                                    }}
+                                >
+                                    <Text style={[styles.sortText, sortBy === option.value && styles.activeSortText]}>
+                                        {option.label}
+                                    </Text>
+                                    {sortBy === option.value && <Ionicons name="checkmark" size={20} color="#00C2FF" />}
+                                </TouchableOpacity>
+                            ))}
+                            <TouchableOpacity
+                                style={styles.closeButton}
+                                onPress={() => setShowSortModal(false)}
+                            >
+                                <Text style={styles.closeText}>Close</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                </Modal>
+            </SafeAreaView>
+        </BackgroundLayout>
     );
 };
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#000',
+        backgroundColor: 'transparent',
     },
     header: {
         flexDirection: 'row',
@@ -165,21 +168,21 @@ const styles = StyleSheet.create({
         paddingHorizontal: 15,
         paddingVertical: 8,
         borderRadius: 20,
-        backgroundColor: '#333',
+        backgroundColor: '#151F38',
         marginRight: 10,
         borderWidth: 1,
-        borderColor: '#444',
+        borderColor: '#2A3B55',
     },
     selectedChip: {
-        backgroundColor: '#E50914',
-        borderColor: '#E50914',
+        backgroundColor: '#00C2FF',
+        borderColor: '#00C2FF',
     },
     genreText: {
-        color: '#ccc',
+        color: '#8899A6',
         fontWeight: '500',
     },
     selectedGenreText: {
-        color: 'white',
+        color: '#050A18',
         fontWeight: 'bold',
     },
     list: {
@@ -189,13 +192,15 @@ const styles = StyleSheet.create({
     modalContainer: {
         flex: 1,
         justifyContent: 'flex-end',
-        backgroundColor: 'rgba(0,0,0,0.5)',
+        backgroundColor: 'rgba(5, 10, 24, 0.8)',
     },
     modalContent: {
-        backgroundColor: '#1a1a1a',
+        backgroundColor: '#0B1221',
         borderTopLeftRadius: 20,
         borderTopRightRadius: 20,
         padding: 20,
+        borderTopWidth: 1,
+        borderTopColor: '#1F2937',
     },
     modalTitle: {
         color: 'white',
@@ -209,14 +214,14 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
         paddingVertical: 15,
         borderBottomWidth: 1,
-        borderBottomColor: '#333',
+        borderBottomColor: '#1F2937',
     },
     sortText: {
-        color: '#aaa',
+        color: '#8899A6',
         fontSize: 16,
     },
     activeSortText: {
-        color: '#E50914',
+        color: '#00C2FF',
         fontWeight: 'bold',
     },
     closeButton: {

@@ -3,17 +3,19 @@ import { View, Text, FlatList, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import MovieCard from '../components/MovieCard';
 import { API_BASE_URL } from '../config';
+import { useAuth } from '../context/AuthContext';
+import BackgroundLayout from '../components/BackgroundLayout';
 
-const RecommendationScreen = ({ userId, navigation }) => {
+const RecommendationScreen = ({ navigation }) => {
+    const { user } = useAuth();
     const [recommendations, setRecommendations] = useState([]);
     const API_URL = API_BASE_URL;
 
     useEffect(() => {
-        // In a real app, userId would come from context or props
-        // For now, we hardcode 'user1' or use the prop if passed
-        const uid = userId || 'user1';
-        fetchRecommendations(uid);
-    }, [userId]);
+        if (user) {
+            fetchRecommendations(user.id);
+        }
+    }, [user]);
 
     const fetchRecommendations = async (uid) => {
         try {
@@ -26,30 +28,32 @@ const RecommendationScreen = ({ userId, navigation }) => {
     };
 
     return (
-        <SafeAreaView style={styles.container}>
-            <Text style={styles.header}>For You</Text>
-            <FlatList
-                data={recommendations}
-                keyExtractor={(item) => item.id.toString()}
-                renderItem={({ item }) => (
-                    <MovieCard
-                        movie={item}
-                        onLike={() => { }}
-                        onPress={() => navigation.navigate('MovieDetail', { movieId: item.id })}
-                    />
-                )}
-                numColumns={2}
-                contentContainerStyle={styles.list}
-                ListEmptyComponent={<Text style={styles.empty}>Like some movies to get recommendations!</Text>}
-            />
-        </SafeAreaView>
+        <BackgroundLayout>
+            <SafeAreaView style={styles.container}>
+                <Text style={styles.header}>For You</Text>
+                <FlatList
+                    data={recommendations}
+                    keyExtractor={(item) => item.id.toString()}
+                    renderItem={({ item }) => (
+                        <MovieCard
+                            movie={item}
+                            onLike={() => { }}
+                            onPress={() => navigation.navigate('MovieDetail', { movieId: item.id })}
+                        />
+                    )}
+                    numColumns={2}
+                    contentContainerStyle={styles.list}
+                    ListEmptyComponent={<Text style={styles.empty}>Like some movies to get recommendations!</Text>}
+                />
+            </SafeAreaView>
+        </BackgroundLayout>
     );
 };
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#000',
+        backgroundColor: 'transparent',
     },
     header: {
         fontSize: 24,
@@ -62,9 +66,10 @@ const styles = StyleSheet.create({
         paddingBottom: 20,
     },
     empty: {
-        color: '#aaa',
+        color: '#8899A6',
         textAlign: 'center',
         marginTop: 50,
+        fontSize: 16,
     },
 });
 

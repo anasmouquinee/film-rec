@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>A-FILM | Architectural Showcase</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Montserrat:wght@300;500;600;700&family=Fira+Code:wght@400&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            /* App Theme Colors extracted from code */
+            --app-bg: #050A18;      /* Main Background */
+            --app-card: #151F38;    /* Card Background */
+            --app-cyan: #00C2FF;    /* Primary Accent */
+            --app-border: #2A3B55;  /* Borders */
+            --app-text-muted: #8899A6;
+            
+            --brand-red: #E50914; 
+            --glass: rgba(5, 10, 24, 0.85); /* Darker glass for A-Film feel */
+        }
+
+        body {
+            background: linear-gradient(180deg, var(--app-bg) 0%, #000000 100%);
+            color: #fff;
+            font-family: 'Montserrat', sans-serif;
+            overflow: hidden;
+            margin: 0; padding: 0; width: 100vw; height: 100vh;
+        }
+
+        h1, h2, h3, .movie-font { font-family: 'Bebas Neue', sans-serif; letter-spacing: 0.05em; }
+        .code-font { font-family: 'Fira Code', monospace; }
+
+        /* --- FILM STRIP DECORATION --- */
+        .film-strip {
+            position: absolute; top: 0; bottom: 0; width: 50px;
+            background: #0a0a0a; border-left: 2px solid #333; border-right: 2px solid #333;
+            z-index: 5; display: flex; flex-direction: column; overflow: hidden;
+            box-shadow: 0 0 30px rgba(0,0,0,0.9);
+        }
+        .film-strip.left { left: 0; }
+        .film-strip.right { right: 0; }
+        
+        .film-holes {
+            width: 100%; height: 100%;
+            background-image: 
+                radial-gradient(circle, transparent 30%, #0a0a0a 31%),
+                radial-gradient(circle, #333 2px, transparent 3px);
+            background-size: 100% 40px, 100% 40px;
+            position: relative;
+        }
+        
+        .film-holes::before, .film-holes::after {
+            content: ''; position: absolute; width: 15px; height: 100%;
+            background-image: radial-gradient(#fff 3px, transparent 4px);
+            background-size: 20px 30px;
+            animation: scrollFilm 8s linear infinite;
+            opacity: 0.8;
+        }
+        .film-holes::before { left: 4px; }
+        .film-holes::after { right: 4px; }
+        @keyframes scrollFilm { from { background-position: 0 0; } to { background-position: 0 600px; } }
+
+        /* --- LAYOUT --- */
+        #container { position: relative; width: calc(100% - 140px); height: 100%; margin: 0 auto; display: flex; justify-content: center; align-items: center; z-index: 10; }
+        
+        .slide {
+            position: absolute; width: 90%; height: 90%;
+            opacity: 0; transform: scale(0.9) translateY(30px); 
+            transition: all 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+            pointer-events: none; display: flex; flex-direction: column; justify-content: center;
+            filter: blur(8px);
+        }
+        .slide.active { opacity: 1; transform: scale(1) translateY(0); filter: blur(0); pointer-events: all; }
+
+        /* --- UI COMPONENTS --- */
+        .cinema-panel {
+            background: var(--glass);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--app-border);
+            border-top: 4px solid var(--app-cyan);
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7);
+            position: relative; overflow: hidden;
+        }
+
+        /* --- APP SPECIFIC MOCKUPS (MovieCard.js replica) --- */
+        .app-card-mockup {
+            width: 180px;
+            background-color: var(--app-card);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid var(--app-border);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            transition: transform 0.3s;
+        }
+        .app-card-mockup:hover { transform: translateY(-5px); border-color: var(--app-cyan); }
+        .app-card-image {
+            height: 240px; width: 100%; background-size: cover; background-position: center;
+            position: relative;
+        }
+        .app-card-info { padding: 10px; }
+        .app-card-title { font-size: 14px; font-weight: bold; color: white; margin-bottom: 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .app-card-row { display: flex; justify-content: space-between; items-align: center; }
+        .app-card-rating { font-size: 12px; color: white; display: flex; align-items: center; gap: 4px; }
+        
+        /* --- DIAGRAMS --- */
+        .blueprint-box {
+            border: 1px dashed rgba(0, 194, 255, 0.5); 
+            background: rgba(5, 10, 24, 0.8);
+            padding: 1rem;
+            border-radius: 8px;
+            text-align: center;
+            position: relative;
+        }
+        .blueprint-label {
+            position: absolute; top: -10px; left: 10px;
+            background: #000; color: var(--app-cyan);
+            font-family: 'Fira Code', monospace; font-size: 10px; padding: 0 5px;
+        }
+
+        /* --- NAVIGATION --- */
+        .track-nav {
+            position: absolute; top: 30px; left: 50%; transform: translateX(-50%);
+            display: flex; gap: 10px; z-index: 50;
+            background: rgba(0,0,0,0.9); padding: 8px; border-radius: 50px; border: 1px solid #333;
+        }
+        .track-tab {
+            padding: 8px 24px; border-radius: 40px; color: #888; cursor: pointer;
+            font-family: 'Bebas Neue'; font-size: 1.2rem; letter-spacing: 1px;
+            transition: all 0.3s;
+        }
+        .track-tab:hover { color: #fff; background: rgba(255,255,255,0.1); }
+        .track-tab.active { background: var(--app-cyan); color: #050A18; box-shadow: 0 0 20px rgba(0, 194, 255, 0.4); }
+
+        /* --- 3D PHONE --- */
+        .phone-mockup {
+            width: 280px; height: 560px; border: 8px solid #111; border-radius: 40px;
+            background: #000; position: relative; box-shadow: -20px 20px 50px rgba(0,0,0,0.8);
+            transform: rotateY(-15deg) rotateX(10deg);
+            transition: transform 0.5s ease;
+            overflow: hidden;
+        }
+        .phone-mockup:hover { transform: rotateY(0deg) rotateX(0deg) scale(1.05); }
+        .phone-notch { position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 120px; height: 25px; background: #111; border-bottom-left-radius: 12px; border-bottom-right-radius: 12px; z-index: 20; }
+        
+        #popcornCanvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 4; pointer-events: none; }
+    </style>
+</head>
+<body>
+
+    <!-- DECORATION -->
+    <div class="film-strip left"><div class="film-holes"></div></div>
+    <div class="film-strip right"><div class="film-holes"></div></div>
+    <canvas id="popcornCanvas"></canvas>
+
+    <!-- LOGO A-FILM -->
+    <div class="absolute top-8 left-20 z-50 flex items-center gap-3">
+        <!-- Logo Text Style from LoginScreen.js -->
+        <div style="font-family: 'Bebas Neue'; font-weight: bold; color: #00C2FF; text-shadow: 0 0 20px rgba(0, 194, 255, 0.5); font-size: 2rem; letter-spacing: 2px;">
+            A-FILM
+        </div>
+    </div>
+
+    <!-- SCHOOL LOGO -->
+    <div class="absolute top-8 right-20 z-50">
+        <img src="logo-blanc.png" alt="School Logo" class="h-16 opacity-90 hover:opacity-100 transition-opacity">
+    </div>
+
+    <!-- NAVIGATION TRACKS -->
+    <div class="track-nav">
+        <div class="track-tab" id="tab-intro" onclick="goToSlide(1)">ACCUEIL</div>
+        <div class="track-tab" id="tab-a" onclick="goToSlide(3)">FRONTEND REC</div>
+        <div class="track-tab" id="tab-b" onclick="goToSlide(6)">BACKEND NEO4J</div>
+        <div class="track-tab" id="tab-c" onclick="goToSlide(9)">CONCEPTION</div>
+    </div>
+
+    <div id="container">
+
+        <!-- SLIDE 1: INTRO -->
+        <div class="slide active" data-slide="1" data-track="intro">
+            <div class="flex flex-col items-center justify-center text-center h-full pt-32">
+                <div class="mb-6 px-4 py-1 rounded-full bg-cyan-900/20 border border-cyan-500/30 text-cyan-400 text-sm font-bold tracking-widest animate-pulse">
+                    PROJET DE DEV MOBILE 
+                </div>
+                <h1 class="text-9xl mb-2 leading-none" style="text-shadow: 0 0 60px rgba(0, 194, 255, 0.3);">A-FILM</h1>
+                <p class="text-3xl text-gray-400 movie-font tracking-widest mb-8">NEXT GEN MOVIE DISCOVERY</p>
+
+                <!-- TEAM MEMBERS -->
+                <div class="mb-12 flex flex-col items-center">
+                    <p class="text-xs text-gray-500 uppercase tracking-widest mb-4 font-mono">PRÉSENTÉ PAR</p>
+                    <div class="grid grid-cols-2 gap-x-12 gap-y-2 text-left">
+                        <div class="flex items-center gap-2"><div class="w-1.5 h-1.5 bg-[#00C2FF] rounded-full"></div><span class="text-gray-300 font-mono text-sm">Anas Mouquine</span></div>
+                        <div class="flex items-center gap-2"><div class="w-1.5 h-1.5 bg-[#00C2FF] rounded-full"></div><span class="text-gray-300 font-mono text-sm">Assia Nouaoury</span></div>
+                        <div class="flex items-center gap-2"><div class="w-1.5 h-1.5 bg-[#00C2FF] rounded-full"></div><span class="text-gray-300 font-mono text-sm">Aya Hbibou</span></div>
+                        <div class="flex items-center gap-2"><div class="w-1.5 h-1.5 bg-[#00C2FF] rounded-full"></div><span class="text-gray-300 font-mono text-sm">Khaoula Essamouni</span></div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-16 w-full max-w-5xl items-center">
+                    <div class="text-left space-y-6">
+                        <p class="text-xl text-gray-200 leading-relaxed">
+                            "Une application mobile native utilisant la puissance des graphes pour connecter les utilisateurs aux films qu'ils vont aimer."
+                        </p>
+                        <div class="flex gap-4">
+                            <button onclick="goToSlide(2)" class="bg-[#00C2FF] text-[#050A18] px-8 py-3 rounded-xl font-bold hover:bg-cyan-300 transition shadow-[0_0_20px_rgba(0,194,255,0.4)]">
+                                EXPLORER
+                            </button>
+                        </div>
+                    </div>
+                    <div class="flex justify-center" style="perspective: 1000px;">
+                        <div class="phone-mockup">
+                            <div class="phone-notch"></div>
+                            <!-- Mock Login Screen based on LoginScreen.js -->
+                            <div class="w-full h-full relative bg-cover bg-center" style="background-image: url('https://images.unsplash.com/photo-1534796636912-3b95b3ab5986?ixlib=rb-1.2.1&auto=format&fit=crop&w=1950&q=80');">
+                                <div class="absolute inset-0 bg-gradient-to-b from-[#050A18]/50 to-[#050A18]/95 flex flex-col items-center justify-center px-6">
+                                    <h1 class="text-5xl font-bold text-[#00C2FF] mb-8 tracking-widest drop-shadow-[0_0_20px_rgba(0,194,255,0.5)]">A-FILM</h1>
+                                    <div class="w-full bg-[#151F38]/70 p-6 rounded-2xl border border-white/10 backdrop-blur-sm">
+                                        <div class="h-10 bg-[#050A18]/50 rounded-xl mb-3 border border-[#2A3B55]"></div>
+                                        <div class="h-10 bg-[#050A18]/50 rounded-xl mb-4 border border-[#2A3B55]"></div>
+                                        <div class="h-12 bg-[#00C2FF] rounded-xl"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SLIDE 2: MENU -->
+        <div class="slide" data-slide="2" data-track="intro">
+            <h2 class="text-6xl movie-font text-center mb-16">MENU TECHNIQUE</h2>
+            <div class="flex justify-center gap-8">
+                <div onclick="goToSlide(3)" class="cinema-panel w-80 cursor-pointer hover:-translate-y-2 transition-transform group border-t-[#00C2FF]">
+                    <div class="flex justify-between mb-4"><h3 class="text-3xl text-white">FRONTEND</h3><i data-lucide="smartphone" class="text-[#00C2FF]"></i></div>
+                    <p class="text-sm text-gray-400">React Native, Expo 54, Navigation v7 & Atomic Design</p>
+                </div>
+                <div onclick="goToSlide(6)" class="cinema-panel w-80 cursor-pointer hover:-translate-y-2 transition-transform group border-t-pink-500">
+                    <div class="flex justify-between mb-4"><h3 class="text-3xl text-white">BACKEND</h3><i data-lucide="database" class="text-pink-400"></i></div>
+                    <p class="text-sm text-gray-400">Node.js API, Graphe Neo4j, Lazy Ingestion & Cypher</p>
+                </div>
+                <div onclick="goToSlide(9)" class="cinema-panel w-80 cursor-pointer hover:-translate-y-2 transition-transform group border-t-green-500">
+                    <div class="flex justify-between mb-4"><h3 class="text-3xl text-white">DESIGN</h3><i data-lucide="layout" class="text-green-400"></i></div>
+                    <p class="text-sm text-gray-400">Architecture UML, User Flow & Composants</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- TRACK A: FRONTEND -->
+        <div class="slide" data-slide="3" data-track="A">
+            <h2 class="text-xl text-[#00C2FF] font-mono mb-4 tracking-widest">PARTIE 1 // ARCHITECTURE APP</h2>
+            <div class="grid grid-cols-2 gap-12">
+                <div class="cinema-panel border-t-[#00C2FF]">
+                    <h3 class="text-4xl movie-font mb-6">Stack Mobile & Dépendances</h3>
+                    <div class="space-y-3">
+                        <div class="flex items-center gap-4 p-3 bg-[#050A18] rounded-lg border border-[#2A3B55]">
+                            <i data-lucide="atom" class="text-[#00C2FF] w-6 h-6"></i>
+                            <div><strong class="block text-white text-sm">React Native 0.81</strong><span class="text-xs text-gray-400">Core Engine</span></div>
+                        </div>
+                        <div class="flex items-center gap-4 p-3 bg-[#050A18] rounded-lg border border-[#2A3B55]">
+                            <i data-lucide="layers" class="text-white w-6 h-6"></i>
+                            <div><strong class="block text-white text-sm">Expo SDK 54</strong><span class="text-xs text-gray-400">EAS Build & Go</span></div>
+                        </div>
+                        <div class="flex items-center gap-4 p-3 bg-[#050A18] rounded-lg border border-[#2A3B55]">
+                            <i data-lucide="compass" class="text-green-400 w-6 h-6"></i>
+                            <div><strong class="block text-white text-sm">React Navigation v7</strong><span class="text-xs text-gray-400">Native Stack</span></div>
+                        </div>
+                        <div class="flex items-center gap-4 p-3 bg-[#050A18] rounded-lg border border-[#2A3B55]">
+                            <i data-lucide="package" class="text-yellow-400 w-6 h-6"></i>
+                            <div><strong class="block text-white text-sm">Libraries Clés</strong><span class="text-xs text-gray-400">Axios, AsyncStorage, LinearGradient, Lucide-React</span></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="relative flex flex-col items-center justify-center p-8 bg-[#050A18]/50 rounded-xl border border-dashed border-gray-700">
+                    <div class="text-sm text-gray-400 mb-4 font-mono">HIERARCHIE DES COMPOSANTS</div>
+                    <div class="w-full max-w-xs space-y-2 text-xs">
+                        <div class="p-2 bg-gray-800 rounded border border-gray-600 text-center font-mono">App.js (Root)</div>
+                         <div class="flex justify-center h-2 border-l border-gray-600 mx-auto"></div>
+                        <div class="p-2 bg-purple-900/40 border border-purple-500/50 rounded text-center font-mono">AuthProvider (Context)</div>
+                        <div class="flex justify-center h-2 border-l border-gray-600 mx-auto"></div>
+                        <div class="p-2 bg-blue-900/40 border border-blue-500/50 rounded text-center font-mono">NavigationContainer</div>
+                        <div class="flex justify-center h-4 border-l border-gray-600 mx-auto"></div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div class="p-2 bg-red-900/40 border border-red-500/50 rounded text-center">
+                                <span class="text-red-300 block font-bold">AuthStack</span>
+                                <span class="text-[9px] text-gray-400">LoginScreen<br>RegisterScreen</span>
+                            </div>
+                            <div class="p-2 bg-cyan-900/40 border border-cyan-500/50 rounded text-center">
+                                <span class="text-cyan-300 block font-bold">HomeStack</span>
+                                <span class="text-[9px] text-gray-400">Tabs (Home, Explore)<br>MovieDetailScreen</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="slide" data-slide="4" data-track="A">
+            <h2 class="text-xl text-[#00C2FF] font-mono mb-4 tracking-widest">PARTIE 1 // DESIGN SYSTEM UI</h2>
+            <div class="grid grid-cols-12 gap-8 items-center">
+                <!-- Live Component Demo -->
+                <div class="col-span-5 flex flex-col items-center">
+                    <div class="mb-4 text-xs font-mono text-gray-400 uppercase tracking-widest">Rendu Réel (MovieCard.js)</div>
+                    
+                    <!-- CSS RECREATION OF MOVIECARD.JS -->
+                    <div class="app-card-mockup group cursor-pointer relative">
+                        <div class="app-card-image" style="background-image: url('https://image.tmdb.org/t/p/w500/1E5baAaEse26fej7uHcjOgEE2t2.jpg');"></div>
+                        <div class="app-card-info">
+                            <div class="app-card-title">Fast & Furious X</div>
+                            <div class="app-card-row">
+                                <div class="app-card-rating">
+                                    <i data-lucide="star" class="w-3 h-3 text-yellow-500 fill-current"></i> 7.2
+                                </div>
+                                <i data-lucide="heart" class="w-5 h-5 text-gray-400 group-hover:text-[#00C2FF] group-hover:fill-current transition-colors"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-8 flex gap-4">
+                        <div class="app-card-mockup group cursor-pointer" style="transform: scale(0.9); opacity: 0.7;">
+                            <div class="app-card-image" style="background-image: url('https://image.tmdb.org/t/p/w500/8Vt6mWEReuy4Of61Lnj5Xj704m8.jpg');"></div>
+                            <div class="app-card-info">
+                                <div class="app-card-title">Spider-Man</div>
+                                <div class="app-card-row">
+                                    <div class="app-card-rating"><i data-lucide="star" class="w-3 h-3 text-yellow-500 fill-current"></i> 8.5</div>
+                                    <i data-lucide="heart" class="w-5 h-5 text-[#00C2FF] fill-current"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-span-7 cinema-panel border-t-[#00C2FF]">
+                    <h3 class="text-4xl movie-font mb-4">Composants Stylisés</h3>
+                    <p class="text-gray-400 mb-6">Une interface sombre et immersive utilisant <code>StyleSheet</code> et des gradients.</p>
+                    
+                    <div class="space-y-4 font-mono text-sm">
+                        <div class="p-3 bg-[#050A18] rounded border-l-4 border-[#00C2FF]">
+                            <div class="text-[#00C2FF] font-bold">MovieCard.js</div>
+                            <div class="text-gray-500 layout-snippet">
+                                borderRadius: 12<br>
+                                backgroundColor: '#151F38'<br>
+                                borderColor: '#2A3B55'
+                            </div>
+                        </div>
+                        <div class="p-3 bg-[#050A18] rounded border-l-4 border-purple-500">
+                            <div class="text-purple-400 font-bold">BackgroundLayout.js</div>
+                            <div class="text-gray-500">
+                                LinearGradient: ['#050A18', '#1a2a4a']<br>
+                                Wrapper global pour la cohérence visuelle.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="slide" data-slide="5" data-track="A">
+            <h2 class="text-xl text-[#00C2FF] font-mono mb-4 tracking-widest">PARTIE 1 // GESTION D'ÉTAT</h2>
+            <div class="cinema-panel w-full max-w-4xl border-t-[#00C2FF]">
+                <h3 class="text-4xl movie-font mb-6">Logique & Contexte</h3>
+                <div class="grid grid-cols-2 gap-8">
+                    <div class="bg-black/50 p-6 rounded-xl border border-gray-700">
+                        <div class="flex items-center gap-3 mb-4">
+                            <i data-lucide="lock" class="text-[#00C2FF]"></i>
+                            <strong class="text-white text-xl">AuthContext.js</strong>
+                        </div>
+                        <p class="text-sm text-gray-400 leading-relaxed">
+                            Encapsule l'état de l'utilisateur globalement. Fournit les méthodes <code>login()</code> et <code>logout()</code> à tous les écrans via le Hook <code>useAuth()</code>.
+                        </p>
+                    </div>
+                    <div class="bg-black/50 p-6 rounded-xl border border-gray-700">
+                        <div class="flex items-center gap-3 mb-4">
+                            <i data-lucide="wifi" class="text-green-400"></i>
+                            <strong class="text-white text-xl">API Integration</strong>
+                        </div>
+                        <p class="text-sm text-gray-400 leading-relaxed">
+                            Les écrans comme <code>EvaluateScreen</code> et <code>ExploreScreen</code> consomment <code>config.js</code> pour l'URL dynamique (Local/Prod) et gèrent les états de chargement asynchrones.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TRACK B: BACKEND -->
+        <div class="slide" data-slide="6" data-track="B">
+            <h2 class="text-xl text-pink-400 font-mono mb-4 tracking-widest">PARTIE 2 // MODÈLE DE DONNÉES (GRAPHE)</h2>
+            <div class="grid grid-cols-2 gap-12 items-center">
+                <div class="cinema-panel border-t-pink-500">
+                    <h3 class="text-4xl movie-font mb-4">Noeuds & Relations</h3>
+                    <p class="text-xs text-gray-400 mb-4">Modélisation native sans jointures coûteuses (Index-Free Adjacency).</p>
+                    <div class="space-y-4 font-mono text-sm">
+                        <div class="flex items-center gap-3">
+                            <span class="w-3 h-3 rounded-full bg-pink-500"></span>
+                            <span class="text-pink-400">(:User)</span>
+                            <span class="text-gray-500 text-xs">{ id: UUID, username, password }</span>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <span class="w-3 h-3 rounded-full bg-cyan-500"></span>
+                            <span class="text-cyan-400">(:Film)</span>
+                            <span class="text-gray-500 text-xs">{ tmdb_id, title, vote_average, poster_path }</span>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <span class="w-3 h-3 rounded-full bg-yellow-500"></span>
+                            <span class="text-yellow-400">(:Genre)</span>
+                            <span class="text-gray-500 text-xs">{ id, name } (ex: 28='Action')</span>
+                        </div>
+                        <div class="border-t border-gray-700 my-4 pt-4">
+                            <strong class="text-white text-xs block mb-2">Pattern Cypher:</strong>
+                            <div class="bg-gray-800 p-2 rounded text-xs text-green-300 font-mono border border-green-900">
+                                (u:User)-[:LIKES {at: datetime()}]->(f:Film)<br>
+                                (f:Film)-[:BELONGS_TO]->(g:Genre)
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Graph Viz -->
+                <div class="relative w-full h-80 flex items-center justify-center">
+                    <div class="absolute w-24 h-24 bg-pink-600/20 rounded-full animate-ping"></div>
+                    <!-- Nodes -->
+                    <div class="absolute top-10 left-10 w-16 h-16 bg-pink-600 rounded-full flex items-center justify-center font-bold z-10 border-2 border-white">User</div>
+                    <div class="absolute bottom-10 right-10 w-16 h-16 bg-cyan-600 rounded-full flex items-center justify-center font-bold z-10 border-2 border-white">Film</div>
+                    <div class="absolute bottom-10 left-32 w-12 h-12 bg-yellow-600 rounded-full flex items-center justify-center text-xs z-10 border border-white">Genre</div>
+                    
+                    <!-- Edges -->
+                    <svg class="absolute inset-0 w-full h-full pointer-events-none">
+                        <line x1="80" y1="80" x2="280" y2="240" stroke="#555" stroke-width="2" />
+                        <text x="160" y="150" fill="white" font-size="10" class="uppercase bg-black px-1">[:LIKES]</text>
+                        
+                        <line x1="280" y1="240" x2="160" y2="270" stroke="#555" stroke-width="2" />
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <div class="slide" data-slide="7" data-track="B">
+            <h2 class="text-xl text-pink-400 font-mono mb-4 tracking-widest">PARTIE 2 // STRATÉGIE D'INGESTION "LAZY"</h2>
+            <div class="cinema-panel w-full max-w-5xl border-t-pink-500">
+                <h3 class="text-4xl movie-font mb-6">Optimisation & Performance</h3>
+                <div class="flex gap-8">
+                    <div class="w-1/2">
+                        <div class="mb-4">
+                            <strong class="text-white text-sm">Problème:</strong>
+                            <p class="text-gray-400 text-xs">Importer les 800k+ films de TMDB saturerait la DB gratuite (AuraDB).</p>
+                        </div>
+                        <div class="mb-4">
+                            <strong class="text-cyan-400 text-sm">Solution: Lazy Ingestion</strong>
+                            <p class="text-gray-300 text-xs leading-relaxed">
+                                Les films n'existent que virtuellement dans l'UI (via API TMDB). Ils ne sont créés (MERGE) dans Neo4j que lors d'une interaction utilisateur (Like, Vote).
+                            </p>
+                        </div>
+                        <div class="bg-black p-4 rounded-lg border border-gray-800 font-mono text-xs text-green-400 overflow-hidden">
+                            <span class="text-pink-500">MERGE</span> (m:Film {id: $id})<br>
+                            <span class="text-pink-500">ON CREATE SET</span><br>
+                            &nbsp;&nbsp;m.title = $title,<br>
+                            &nbsp;&nbsp;m.poster_path = $poster,<br>
+                            &nbsp;&nbsp;m.vote_average = $vote<br>
+                            <span class="text-gray-500">// Si le film existe, on ne fait rien</span>
+                        </div>
+                    </div>
+                    <div class="w-1/2 flex flex-col justify-center gap-4">
+                        <div class="flex items-center gap-4 p-3 bg-gray-900 rounded border border-gray-700 opacity-50">
+                            <i data-lucide="cloud" class="text-gray-400"></i> TMDB API (Raw Data)
+                        </div>
+                        <div class="flex justify-center"><i data-lucide="arrow-down" class="text-white"></i></div>
+                        <div class="flex items-center gap-4 p-3 bg-pink-900/30 rounded border border-pink-500">
+                            <i data-lucide="database" class="text-pink-400"></i> Neo4j (Graph Data)
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="slide" data-slide="8" data-track="B">
+            <h2 class="text-xl text-pink-400 font-mono mb-4 tracking-widest">PARTIE 2 // INFRASTRUCTURE & MIGRATION</h2>
+            <div class="grid grid-cols-2 gap-8">
+                <div class="cinema-panel border-t-pink-500">
+                    <h3 class="text-2xl movie-font mb-4">Scripts de Migration</h3>
+                    <ul class="space-y-3 text-sm text-gray-300 font-mono">
+                        <li class="flex items-center gap-2"><i data-lucide="file-code" class="text-pink-400 w-4 h-4"></i> migrate_full.js</li>
+                        <li class="flex items-center gap-2"><i data-lucide="file-code" class="text-pink-400 w-4 h-4"></i> migrate_local_to_aura.js</li>
+                    </ul>
+                    <div class="mt-6 p-3 bg-yellow-900/20 border border-yellow-600/50 rounded text-xs text-yellow-200">
+                        <i data-lucide="alert-triangle" class="inline w-3 h-3 mr-1"></i>
+                        Les données sont migrées de l'environnement Docker local vers Neo4j AuraDB (Cloud) pour la production.
+                    </div>
+                </div>
+                <!-- Stats -->
+                <div class="flex flex-col gap-4">
+                    <div class="bg-[#151F38] p-6 rounded-xl border border-[#2A3B55] text-center">
+                        <div class="text-4xl font-bold text-white mb-1">~5ms</div>
+                        <div class="text-xs text-gray-500 uppercase">Temps réponse Recommandation</div>
+                    </div>
+                    <div class="bg-[#151F38] p-6 rounded-xl border border-[#2A3B55] text-center">
+                        <div class="text-4xl font-bold text-white mb-1">REST</div>
+                        <div class="text-xs text-gray-500 uppercase">API Architecture (Express)</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TRACK C: DESIGN -->
+        
+        <div class="slide" data-slide="9" data-track="C">
+            <h2 class="text-xl text-green-500 font-mono mb-4 tracking-widest">PARTIE 3 // CONCEPTION & USE CASES</h2>
+            <div class="grid grid-cols-12 gap-8 w-full max-w-6xl">
+                <!-- Actors -->
+                <div class="col-span-3 space-y-4">
+                     <div class="bg-[#151F38] p-4 rounded-lg border border-green-900">
+                        <h4 class="text-green-400 font-bold mb-2 flex items-center gap-2"><i data-lucide="user"></i> Acteurs</h4>
+                        <ul class="text-xs text-gray-300 space-y-2">
+                            <li><strong class="text-white">Utilisateur:</strong> Consulte, Like, Recherche.</li>
+                            <li><strong class="text-white">Système:</strong> Gère les sessions, calcule les recs.</li>
+                            <li><strong class="text-white">TMDB API:</strong> Fournit les métadonnées brutes.</li>
+                        </ul>
+                    </div>
+                     <div class="bg-[#151F38] p-4 rounded-lg border border-green-900">
+                        <h4 class="text-green-400 font-bold mb-2 flex items-center gap-2"><i data-lucide="target"></i> Objectifs</h4>
+                        <p class="text-xs text-gray-300">Minimiser la friction d'inscription et maximiser la découverte (Serendipity).</p>
+                    </div>
+                </div>
+
+                <!-- Diagram -->
+                <div class="col-span-9 bg-[#050A18] border border-green-900 rounded-lg p-6 relative">
+                    <span class="absolute top-2 right-2 text-green-500 text-xs font-mono">FLUX D'INTERACTION</span>
+                    <div class="flex justify-between items-center h-full px-4 relative">
+                        <!-- Connecting Line -->
+                        <div class="absolute top-1/2 left-10 right-10 h-0.5 bg-gray-700 -z-0"></div>
+                        
+                        <!-- Steps -->
+                        <div class="z-10 flex flex-col items-center gap-3 w-1/4">
+                            <div class="w-14 h-14 rounded-full bg-[#151F38] border-2 border-green-500 flex items-center justify-center hover:scale-110 transition shadow-[0_0_15px_rgba(34,197,94,0.3)]"><i data-lucide="log-in" class="text-white w-6 h-6"></i></div>
+                            <div class="text-center">
+                                <span class="text-xs font-bold text-green-400 block">1. Onboarding</span>
+                                <span class="text-[10px] text-gray-500">Sign Up + Sélection Genres</span>
+                            </div>
+                        </div>
+
+                         <div class="z-10 flex flex-col items-center gap-3 w-1/4">
+                            <div class="w-14 h-14 rounded-full bg-[#151F38] border-2 border-gray-500 flex items-center justify-center hover:scale-110 transition"><i data-lucide="search" class="text-white w-6 h-6"></i></div>
+                            <div class="text-center">
+                                <span class="text-xs font-bold text-gray-300 block">2. Exploration</span>
+                                <span class="text-[10px] text-gray-500">Feed Infini & Recherche</span>
+                            </div>
+                        </div>
+
+                        <div class="z-10 flex flex-col items-center gap-3 w-1/4">
+                            <div class="w-14 h-14 rounded-full bg-[#151F38] border-2 border-[#00C2FF] flex items-center justify-center hover:scale-110 transition shadow-[0_0_15px_rgba(0,194,255,0.3)]"><i data-lucide="heart" class="text-[#00C2FF] w-6 h-6"></i></div>
+                            <div class="text-center">
+                                <span class="text-xs font-bold text-[#00C2FF] block">3. Interaction</span>
+                                <span class="text-[10px] text-gray-500">Like = Création Relation Neo4j</span>
+                            </div>
+                        </div>
+
+                        <div class="z-10 flex flex-col items-center gap-3 w-1/4">
+                            <div class="w-14 h-14 rounded-full bg-[#151F38] border-2 border-pink-500 flex items-center justify-center hover:scale-110 transition shadow-[0_0_15px_rgba(236,72,153,0.3)]"><i data-lucide="sparkles" class="text-pink-500 w-6 h-6"></i></div>
+                            <div class="text-center">
+                                <span class="text-xs font-bold text-pink-500 block">4. Recommandation</span>
+                                <span class="text-[10px] text-gray-500">Algorithme "Users who liked..."</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="slide" data-slide="10" data-track="C">
+            <h2 class="text-xl text-green-500 font-mono mb-4 tracking-widest">PARTIE 3 // MODÉLISATION DE DONNÉES (CLASS DIAGRAM)</h2>
+            <div class="flex gap-8 w-full max-w-6xl h-[60vh]">
+                <!-- Diagram Panel -->
+                <div class="flex-grow bg-[#050A18] border border-green-900 rounded-lg p-8 relative overflow-hidden">
+                    <div class="absolute inset-0 grid grid-cols-[20px_20px] opacity-10" style="background-image: radial-gradient(#333 1px, transparent 1px); background-size: 20px 20px;"></div>
+                    
+                    <div class="flex justify-center items-center h-full gap-16 relative z-10">
+                        <!-- USER Class -->
+                        <div class="w-56 border border-green-600 rounded bg-[#111] shadow-xl">
+                            <div class="bg-green-900/50 p-3 text-center font-bold text-sm text-green-400 font-mono border-b border-green-800">User</div>
+                            <div class="p-4 text-xs text-gray-300 font-mono space-y-2 border-b border-green-800/50">
+                                <div>- id : UUID</div>
+                                <div>- email : String</div>
+                                <div>- password_hash : String</div>
+                                <div>- created_at : DateTime</div>
+                            </div>
+                            <div class="p-3 text-xs text-green-200 font-mono bg-green-900/10">
+                                <div>+ register()</div>
+                                <div>+ login()</div>
+                                <div>+ like_movie(film_id)</div>
+                            </div>
+                        </div>
+
+                        <!-- Relation Line -->
+                        <div class="flex flex-col items-center w-24">
+                            <div class="text-[10px] text-gray-500 self-start mb-1">1</div>
+                            <div class="h-0.5 w-full bg-gradient-to-r from-green-500 to-cyan-500 relative">
+                                <div class="absolute -top-3 left-1/2 -translate-x-1/2 text-[10px] text-white bg-black px-1">LIKES</div>
+                                <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-2 h-2 bg-white rounded-full"></div>
+                            </div>
+                            <div class="text-[10px] text-gray-500 self-end mt-1">0..*</div>
+                        </div>
+
+                        <!-- FILM Class -->
+                        <div class="w-56 border border-cyan-600 rounded bg-[#111] shadow-xl">
+                            <div class="bg-cyan-900/50 p-3 text-center font-bold text-sm text-cyan-400 font-mono border-b border-cyan-800">Film</div>
+                            <div class="p-4 text-xs text-gray-300 font-mono space-y-2 border-b border-cyan-800/50">
+                                <div>- tmdb_id : Integer</div>
+                                <div>- title : String</div>
+                                <div>- overview : Text</div>
+                                <div>- release_date : Date</div>
+                                <div>- poster_path : String</div>
+                            </div>
+                            <div class="p-3 text-xs text-cyan-200 font-mono bg-cyan-900/10">
+                                <div>+ get_details()</div>
+                                <div>+ find_similar()</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Notes Panel -->
+                <div class="w-64 flex flex-col gap-4">
+                    <div class="p-4 bg-gray-900/80 rounded border-l-4 border-green-500">
+                        <strong class="text-green-400 text-sm block mb-2">Multiplicité</strong>
+                        <p class="text-xs text-gray-400">Un utilisateur peut aimer plusieurs films (0..*), et un film peut être aimé par plusieurs utilisateurs (0..*).</p>
+                    </div>
+                    <div class="p-4 bg-gray-900/80 rounded border-l-4 border-cyan-500">
+                        <strong class="text-cyan-400 text-sm block mb-2">Optimisation</strong>
+                        <p class="text-xs text-gray-400">Les attributs lourds (ex: casting complet) ne sont pas stockés dans le nœud Film pour garder le graphe léger. On utilise l'ID pour fetcher TMDB si besoin.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="slide" data-slide="11" data-track="C">
+            <h2 class="text-xl text-green-500 font-mono mb-4 tracking-widest">PARTIE 3 // SÉQUENCE : AFFICHAGE RECOMMANDATIONS</h2>
+            <div class="cinema-panel w-full max-w-5xl overflow-hidden relative">
+                <!-- Background Grid -->
+                <div class="absolute inset-0 pointer-events-none opacity-5" style="background-image: linear-gradient(to right, #333 1px, transparent 1px); background-size: 20% 100%;"></div>
+
+                <div class="grid grid-cols-4 gap-4 text-center font-mono text-xs mb-8 relative z-10">
+                    <div class="text-cyan-400 border-b-2 border-cyan-400 pb-2">Client (App)</div>
+                    <div class="text-pink-400 border-b-2 border-pink-400 pb-2">API Gateway (Express)</div>
+                    <div class="text-green-400 border-b-2 border-green-400 pb-2">Neo4j (Database)</div>
+                    <div class="text-yellow-400 border-b-2 border-yellow-400 pb-2">TMDB (External)</div>
+                </div>
+
+                <div class="space-y-6 relative z-10 text-xs font-mono">
+                    <!-- Step 1 -->
+                    <div class="flex items-center">
+                        <div class="w-1/4 text-right pr-4 text-cyan-300">1. GET /recommendations</div>
+                        <div class="w-1/4 h-0.5 bg-gradient-to-r from-cyan-400 to-pink-400 relative">
+                            <div class="absolute right-0 -top-1 w-2 h-2 bg-pink-400 rotate-45"></div>
+                        </div>
+                        <div class="w-2/4"></div>
+                    </div>
+
+                    <!-- Step 2 -->
+                    <div class="flex items-center">
+                        <div class="w-1/4"></div>
+                        <div class="w-1/4 text-right pr-4 text-pink-300">2. Run Cypher Query</div>
+                        <div class="w-1/4 h-0.5 bg-gradient-to-r from-pink-400 to-green-400 relative">
+                            <div class="absolute right-0 -top-1 w-2 h-2 bg-green-400 rotate-45"></div>
+                        </div>
+                        <div class="w-1/4"></div>
+                    </div>
+
+                    <!-- Step 3 : Processing -->
+                    <div class="flex items-center justify-center py-2">
+                        <div class="bg-green-900/30 px-4 py-1 rounded border border-green-600 text-green-300">
+                            3. Calcul: Collaborative Filtering (Score based)
+                        </div>
+                    </div>
+
+                    <!-- Step 4 : Return IDs -->
+                    <div class="flex items-center">
+                        <div class="w-1/4"></div>
+                        <div class="w-1/4"></div>
+                        <div class="w-1/4 h-0.5 bg-gradient-to-l from-green-400 to-pink-400 relative">
+                            <div class="absolute left-0 -top-1 w-2 h-2 bg-pink-400 rotate-45"></div>
+                        </div>
+                        <div class="w-1/4 pl-4 text-green-300">4. List of [MovieIDs]</div>
+                    </div>
+
+                    <!-- Step 5 : Enrichment (Lazy) -->
+                    <div class="flex items-center">
+                        <div class="w-1/4"></div>
+                        <div class="w-3/4 flex items-center">
+                            <div class="w-1/3 text-right pr-4 text-pink-300">5. Fetch Metadata (cache miss)</div>
+                            <div class="w-2/3 h-0.5 bg-gradient-to-r from-pink-400 to-yellow-400 relative"></div>
+                        </div>
+                    </div>
+
+                    <!-- Return Final -->
+                    <div class="flex items-center mt-4">
+                        <div class="w-1/4 h-0.5 bg-gradient-to-l from-pink-400 to-cyan-400 relative">
+                            <div class="absolute left-0 -top-1 w-2 h-2 bg-cyan-400 rotate-45"></div>
+                        </div>
+                        <div class="w-3/4 pl-4 text-cyan-300 font-bold">6. JSON Response (Movies + Posters)</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- SLIDE 12: END -->
+        <div class="slide" data-slide="12">
+            <div class="text-center">
+                <h2 class="text-8xl movie-font mb-4">FIN DE PRÉSENTATION</h2>
+                <div class="flex justify-center gap-12 mb-12">
+                    <div class="text-center">
+                        <i data-lucide="check-circle" class="w-16 h-16 text-green-500 mx-auto mb-4"></i>
+                        <h3 class="text-2xl font-bold">Scalable</h3>
+                        <p class="text-gray-500 text-sm">Architecture Modulaire</p>
+                    </div>
+                    <div class="text-center">
+                        <i data-lucide="zap" class="w-16 h-16 text-yellow-500 mx-auto mb-4"></i>
+                        <h3 class="text-2xl font-bold">Rapide</h3>
+                        <p class="text-gray-500 text-sm">Graphes Natifs</p>
+                    </div>
+                    <div class="text-center">
+                        <i data-lucide="heart" class="w-16 h-16 text-pink-500 mx-auto mb-4"></i>
+                        <h3 class="text-2xl font-bold">Intuitif</h3>
+                        <p class="text-gray-500 text-sm">UX Cinématographique</p>
+                    </div>
+                </div>
+                <button onclick="goToSlide(1)" class="bg-white text-black px-10 py-4 rounded-full font-bold hover:scale-105 transition shadow-xl border-4 border-transparent hover:border-black">
+                    REJOUER LA PRÉSENTATION
+                </button>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- CONTROLS -->
+    <button onclick="prevSlide()" class="absolute bottom-8 left-20 z-50 text-gray-500 hover:text-white bg-black/50 p-4 rounded-full border border-gray-700 hover:border-[#00C2FF] transition-all"><i data-lucide="chevron-left" class="w-6 h-6"></i></button>
+    <button onclick="nextSlide()" class="absolute bottom-8 right-20 z-50 text-gray-500 hover:text-white bg-black/50 p-4 rounded-full border border-gray-700 hover:border-[#00C2FF] transition-all"><i data-lucide="chevron-right" class="w-6 h-6"></i></button>
+
+    <script>
+        try { lucide.createIcons(); } catch(e) {}
+
+        // --- POPCORN PHYSICS ---
+        const canvas = document.getElementById('popcornCanvas');
+        const ctx = canvas.getContext('2d');
+        let width, height;
+        let particles = [];
+
+        function resize() { width = window.innerWidth; height = window.innerHeight; canvas.width = width; canvas.height = height; }
+        window.addEventListener('resize', resize);
+        resize();
+
+        class Popcorn {
+            constructor() {
+                this.x = Math.random() < 0.5 ? 0 : width; 
+                this.y = height;
+                this.vx = (Math.random() * 12 + 5) * (this.x === 0 ? 1 : -1);
+                this.vy = -(Math.random() * 15 + 12);
+                this.gravity = 0.6;
+                this.size = Math.random() * 12 + 8;
+                this.rotation = 0;
+                this.color = Math.random() > 0.5 ? '#fffdd0' : '#ffeba7'; // Slight color var
+            }
+            update() {
+                this.x += this.vx; this.y += this.vy; this.vy += this.gravity; this.rotation += 0.1;
+            }
+            draw() {
+                ctx.save(); ctx.translate(this.x, this.y); ctx.rotate(this.rotation);
+                ctx.fillStyle = this.color;
+                // Draw popcorn shape
+                ctx.beginPath(); 
+                ctx.arc(0, 0, this.size, 0, Math.PI*2); 
+                ctx.arc(this.size/2, -this.size/2, this.size*0.8, 0, Math.PI*2);
+                ctx.arc(-this.size/2, -this.size/2, this.size*0.8, 0, Math.PI*2);
+                ctx.fill();
+                ctx.restore();
+            }
+        }
+
+        function popPopcorn() {
+            for(let i=0; i<8; i++) particles.push(new Popcorn());
+        }
+
+        function animate() {
+            ctx.clearRect(0, 0, width, height);
+            for(let i = particles.length - 1; i >= 0; i--) {
+                particles[i].update(); particles[i].draw();
+                if(particles[i].y > height + 100) particles.splice(i, 1);
+            }
+            requestAnimationFrame(animate);
+        }
+        animate();
+
+        // SLIDE LOGIC
+        let currentSlide = 1;
+        const totalSlides = 12;
+
+        function updateUI() {
+            document.querySelectorAll('.slide').forEach(el => {
+                el.classList.remove('active');
+                if(parseInt(el.dataset.slide) === currentSlide) el.classList.add('active');
+            });
+            
+            popPopcorn();
+
+            const activeSlide = document.querySelector(`.slide[data-slide="${currentSlide}"]`);
+            if (activeSlide) {
+                const track = activeSlide.dataset.track;
+                if(track) {
+                    ['tab-intro', 'tab-a', 'tab-b', 'tab-c'].forEach(id => {
+                        document.getElementById(id).classList.remove('active');
+                        document.getElementById(id).style.background = 'transparent';
+                    });
+                    
+                    const activeTab = document.getElementById(`tab-${track.toLowerCase()}`);
+                    if(activeTab) {
+                        activeTab.classList.add('active');
+                        activeTab.style.background = 'var(--app-cyan)';
+                    }
+                }
+            }
+        }
+
+        function nextSlide() { if(currentSlide < totalSlides) currentSlide++; updateUI(); }
+        function prevSlide() { if(currentSlide > 1) currentSlide--; updateUI(); }
+        function goToSlide(n) { currentSlide = n; updateUI(); }
+
+        document.addEventListener('keydown', (e) => {
+            if(e.key === 'ArrowRight') nextSlide();
+            if(e.key === 'ArrowLeft') prevSlide();
+        });
+
+        updateUI();
+    </script>
+</body>
+</html>

@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ImageBackground } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
 import { API_BASE_URL } from '../config';
+import { useAuth } from '../context/AuthContext';
 
-const LoginScreen = ({ navigation, onLogin }) => {
+const LoginScreen = ({ navigation }) => {
+    const { login } = useAuth();
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
-    // Replace with your IP
+    // Pour changer avec ip en cas de test 
     const API_URL = API_BASE_URL;
 
     const handleLogin = async () => {
@@ -18,7 +20,7 @@ const LoginScreen = ({ navigation, onLogin }) => {
             });
             const data = await response.json();
             if (data.success) {
-                onLogin(data.userId);
+                login({ id: data.userId, username: data.username });
             } else {
                 alert(data.error || 'Login failed');
             }
@@ -30,26 +32,30 @@ const LoginScreen = ({ navigation, onLogin }) => {
 
     return (
         <ImageBackground
-            source={{ uri: 'https://assets.nflxext.com/ffe/siteui/vlv3/f841d4c7-10e1-40af-bcae-07a3f8dc141a/f6d7434e-d6de-4185-a6d4-c77a2d08737b/US-en-20220502-popsignuptwoweeks-perspective_alpha_website_medium.jpg' }}
-            style={styles.background}
+            source={{ uri: 'https://images.unsplash.com/photo-1534796636912-3b95b3ab5986?ixlib=rb-1.2.1&auto=format&fit=crop&w=1950&q=80' }}
+            style={styles.backgroundImage}
         >
-            <View style={styles.overlay}>
-                <SafeAreaView style={styles.container}>
-                    <Text style={styles.logo}>FILM REC</Text>
+            <LinearGradient
+                colors={['rgba(5, 10, 24, 0.5)', 'rgba(5, 10, 24, 0.95)']}
+                style={styles.overlay}
+            >
+                <View style={styles.container}>
+                    <Text style={styles.logo}>A-FILM</Text>
+
                     <View style={styles.form}>
-                        <Text style={styles.header}>Sign In</Text>
+                        <Text style={styles.header}>Welcome Back</Text>
                         <TextInput
                             style={styles.input}
-                            placeholder="Username"
-                            placeholderTextColor="#aaa"
-                            value={username}
+                            placeholder="Email"
+                            placeholderTextColor="#8899A6"
+                            value={username} // logic uses username as email/id placeholder
                             onChangeText={setUsername}
                             autoCapitalize="none"
                         />
                         <TextInput
                             style={styles.input}
                             placeholder="Password"
-                            placeholderTextColor="#aaa"
+                            placeholderTextColor="#8899A6"
                             value={password}
                             onChangeText={setPassword}
                             secureTextEntry
@@ -59,72 +65,98 @@ const LoginScreen = ({ navigation, onLogin }) => {
                         </TouchableOpacity>
 
                         <TouchableOpacity onPress={() => navigation.navigate('Register')}>
-                            <Text style={styles.link}>New to Film Rec? Sign up now.</Text>
+                            <Text style={styles.link}>New to A-Film? <Text style={styles.signupText}>Sign up now.</Text></Text>
                         </TouchableOpacity>
                     </View>
-                </SafeAreaView>
-            </View>
+                </View>
+            </LinearGradient>
         </ImageBackground>
     );
 };
 
 const styles = StyleSheet.create({
-    background: {
+    backgroundImage: {
         flex: 1,
         width: '100%',
+        height: '100%',
     },
     overlay: {
-        flex: 1,
-        backgroundColor: 'rgba(0,0,0,0.7)',
-    },
-    container: {
         flex: 1,
         justifyContent: 'center',
         padding: 20,
     },
+    container: {
+        width: '100%',
+        alignItems: 'center',
+    },
     logo: {
-        fontSize: 40,
+        fontSize: 50,
         fontWeight: 'bold',
-        color: '#E50914',
-        textAlign: 'center',
+        color: '#00C2FF',
         marginBottom: 40,
-        letterSpacing: 2,
+        letterSpacing: 4,
+        textShadowColor: 'rgba(0, 194, 255, 0.5)',
+        textShadowOffset: { width: 0, height: 0 },
+        textShadowRadius: 20,
     },
     form: {
-        backgroundColor: 'rgba(0,0,0,0.75)',
+        width: '100%',
+        backgroundColor: 'rgba(21, 31, 56, 0.7)',
         padding: 30,
-        borderRadius: 10,
+        borderRadius: 20,
+        borderWidth: 1,
+        borderColor: 'rgba(255, 255, 255, 0.1)',
+        shadowColor: "#000",
+        shadowOffset: {
+            width: 0,
+            height: 10,
+        },
+        shadowOpacity: 0.5,
+        shadowRadius: 10,
+        elevation: 10,
     },
     header: {
-        fontSize: 30,
+        fontSize: 24,
         color: 'white',
         fontWeight: 'bold',
         marginBottom: 30,
+        textAlign: 'center',
     },
     input: {
-        backgroundColor: '#333',
-        borderRadius: 5,
+        height: 50,
+        backgroundColor: 'rgba(5, 10, 24, 0.5)',
+        borderRadius: 12,
+        marginBottom: 15,
+        paddingHorizontal: 15,
         color: 'white',
-        padding: 15,
-        marginBottom: 20,
-        fontSize: 16,
+        borderWidth: 1,
+        borderColor: '#2A3B55',
     },
     button: {
-        backgroundColor: '#E50914',
+        backgroundColor: '#00C2FF',
         padding: 15,
-        borderRadius: 5,
+        borderRadius: 12,
         alignItems: 'center',
-        marginBottom: 20,
+        marginTop: 10,
+        shadowColor: "#00C2FF",
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 5,
+        elevation: 5,
     },
     buttonText: {
-        color: 'white',
-        fontSize: 16,
+        color: '#050A18',
+        fontSize: 18,
         fontWeight: 'bold',
     },
     link: {
-        color: '#aaa',
+        color: '#8899A6',
+        marginTop: 20,
         textAlign: 'center',
-        marginTop: 10,
+    },
+    signupText: {
+        color: 'white',
+        fontWeight: 'bold',
     },
 });
 
