@@ -76,23 +76,23 @@ const ChatScreen = ({ onClose }) => {
         }
     };
 
-    const renderMessage = ({ item }) => (
-        <View
-            style={[
-                styles.messageBubble,
-                item.isUser ? styles.userBubble : styles.aiBubble,
-            ]}
-        >
-            {!item.isUser && (
+    const renderMessage = ({ item }) => {
+        if (item.isUser) {
+            return (
+                <View style={styles.userBubble}>
+                    <Text style={styles.userText}>{item.text}</Text>
+                </View>
+            );
+        }
+        return (
+            <View style={styles.aiBubble}>
                 <View style={styles.aiAvatar}>
                     <Ionicons name="sparkles" size={16} color="#00C2FF" />
                 </View>
-            )}
-            <Text style={[styles.messageText, item.isUser && styles.userText]}>
-                {item.text}
-            </Text>
-        </View>
-    );
+                <Text style={styles.messageText}>{item.text}</Text>
+            </View>
+        );
+    };
 
     return (
         <SafeAreaView style={styles.container}>
@@ -228,41 +228,47 @@ const styles = StyleSheet.create({
         padding: 16,
         paddingBottom: 8,
     },
-    messageBubble: {
-        maxWidth: '85%',
-        padding: 14,
-        borderRadius: 20,
-        marginBottom: 12,
-    },
     userBubble: {
         alignSelf: 'flex-end',
         backgroundColor: '#0066FF',
-        borderBottomRightRadius: 4,
+        paddingHorizontal: 16,
+        paddingVertical: 10,
+        borderRadius: 20,
+        borderBottomRightRadius: 6,
+        marginBottom: 12,
+        maxWidth: '80%',
     },
     aiBubble: {
         alignSelf: 'flex-start',
         backgroundColor: '#1E293B',
-        borderBottomLeftRadius: 4,
+        padding: 14,
+        borderRadius: 20,
+        borderBottomLeftRadius: 6,
         flexDirection: 'row',
         alignItems: 'flex-start',
-        gap: 8,
+        gap: 10,
+        marginBottom: 12,
+        maxWidth: '85%',
     },
     aiAvatar: {
-        width: 24,
-        height: 24,
-        borderRadius: 12,
-        backgroundColor: 'rgba(0, 194, 255, 0.1)',
+        width: 28,
+        height: 28,
+        borderRadius: 14,
+        backgroundColor: 'rgba(0, 194, 255, 0.15)',
         justifyContent: 'center',
         alignItems: 'center',
+        marginTop: 2,
     },
     messageText: {
         color: '#E2E8F0',
         fontSize: 15,
         lineHeight: 22,
-        flex: 1,
+        flexShrink: 1,
     },
     userText: {
         color: '#fff',
+        fontSize: 15,
+        lineHeight: 22,
     },
     typingContainer: {
         paddingHorizontal: 16,
