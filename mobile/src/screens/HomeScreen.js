@@ -85,7 +85,13 @@ const HomeScreen = ({ navigation }) => {
                     presentationStyle="pageSheet"
                     onRequestClose={() => setChatVisible(false)}
                 >
-                    <ChatScreen onClose={() => setChatVisible(false)} />
+                    <ChatScreen
+                        onClose={() => setChatVisible(false)}
+                        onMoviePress={(movieId) => {
+                            setChatVisible(false);
+                            navigation.navigate('MovieDetail', { movieId });
+                        }}
+                    />
                 </Modal>
             </SafeAreaView>
         </BackgroundLayout>

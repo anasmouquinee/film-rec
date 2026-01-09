@@ -324,6 +324,7 @@ app.get('/api/discover', async (req, res) => {
 app.post('/api/chat', async (req, res) => {
   const { message, userId } = req.body;
   const session = driver.session();
+  const TMDB_API_KEY = process.env.TMDB_API_KEY;
 
   try {
     // Fetch user context from Neo4j
@@ -346,31 +347,69 @@ User's liked movies: ${likedMovies.length > 0 ? likedMovies.join(', ') : 'None y
 User's preferred genres: ${preferredGenres.length > 0 ? preferredGenres.join(', ') : 'Not specified'}
     `.trim();
 
-    const systemPrompt = `You are a friendly movie recommendation assistant for a film app. 
+    const systemPrompt = `You are a friendly movie recommendation assistant. 
 Your job is to help users discover movies they'll love.
 
 ${userContext}
 
-Guidelines:
-- Give short, conversational responses (2-3 sentences max)
-- Recommend 1-3 specific movies when asked
-- Consider the user's preferences when making recommendations
-- Be enthusiastic but concise
-- If asked about non-movie topics, politely redirect to movies
+IMPORTANT: When recommending movies, you MUST format them exactly like this:
+[MOVIE: Movie Title (Year)]
 
-When recommending movies, format each movie on its own line like this:
-🎬 Movie Title (Year) - Brief one-line description`;
+Example response:
+"Looking for some laughs? Here are my picks!
+[MOVIE: The Grand Budapest Hotel (2014)]
+[MOVIE: Superbad (2007)]
+These are perfect for a fun movie night!"
+
+Guidelines:
+- Give short, friendly responses (1-2 sentences intro)
+- Recommend 1-3 specific movies when asked
+- Always use the [MOVIE: Title (Year)] format
+- Consider user's preferences
+- Be enthusiastic but concise`;
 
     const result = await model.generateContent([
       { text: systemPrompt },
       { text: message }
     ]);
 
-    const response = result.response.text();
+    const responseText = result.response.text();
+
+    // Extract movie titles from [MOVIE: Title (Year)] format
+    const moviePattern = /\[MOVIE:\s*([^\]]+)\]/g;
+    const movieMatches = [...responseText.matchAll(moviePattern)];
+    const movieTitles = movieMatches.map(m => m[1].replace(/\s*\(\d{4}\)\s*$/, '').trim());
+
+    // Fetch movie data from TMDB for each title
+    const movies = [];
+    for (const title of movieTitles.slice(0, 3)) {
+      try {
+        const searchUrl = `https://api.themoviedb.org/3/search/movie?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(title)}&page=1`;
+        const searchResponse = await fetch(searchUrl);
+        const searchData = await searchResponse.json();
+        if (searchData.results && searchData.results.length > 0) {
+          const movie = searchData.results[0];
+          movies.push({
+            id: movie.id,
+            title: movie.title,
+            poster_path: movie.poster_path,
+            vote_average: movie.vote_average,
+            release_date: movie.release_date,
+            overview: movie.overview?.substring(0, 100) + '...'
+          });
+        }
+      } catch (e) {
+        console.error('TMDB search error:', e.message);
+      }
+    }
+
+    // Clean up the response text (remove [MOVIE:...] tags)
+    const cleanResponse = responseText.replace(moviePattern, '').replace(/\n{3,}/g, '\n\n').trim();
 
     res.json({
       success: true,
-      response,
+      response: cleanResponse,
+      movies,
       context: { likedMovies: likedMovies.length, preferredGenres }
     });
   } catch (error) {

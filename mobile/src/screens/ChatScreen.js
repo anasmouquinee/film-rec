@@ -10,13 +10,15 @@ import {
     Platform,
     ActivityIndicator,
     SafeAreaView,
+    Image,
+    ScrollView,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '../context/AuthContext';
 import { API_BASE_URL } from '../config';
 
-const ChatScreen = ({ onClose }) => {
+const ChatScreen = ({ onClose, onMoviePress }) => {
     const { user } = useAuth();
     const [messages, setMessages] = useState([
         {
@@ -58,6 +60,7 @@ const ChatScreen = ({ onClose }) => {
                 id: (Date.now() + 1).toString(),
                 text: data.response || data.error || "Sorry, I couldn't process that. Try asking about movies!",
                 isUser: false,
+                movies: data.movies || [],
             };
 
             setMessages(prev => [...prev, aiMessage]);
@@ -85,11 +88,45 @@ const ChatScreen = ({ onClose }) => {
             );
         }
         return (
-            <View style={styles.aiBubble}>
-                <View style={styles.aiAvatar}>
-                    <Ionicons name="sparkles" size={16} color="#00C2FF" />
+            <View style={styles.aiMessageContainer}>
+                <View style={styles.aiBubble}>
+                    <View style={styles.aiAvatar}>
+                        <Ionicons name="sparkles" size={16} color="#00C2FF" />
+                    </View>
+                    <Text style={styles.messageText}>{item.text}</Text>
                 </View>
-                <Text style={styles.messageText}>{item.text}</Text>
+                {item.movies && item.movies.length > 0 && (
+                    <ScrollView
+                        horizontal
+                        showsHorizontalScrollIndicator={false}
+                        style={styles.movieCardsContainer}
+                    >
+                        {item.movies.map((movie) => (
+                            <TouchableOpacity
+                                key={movie.id}
+                                style={styles.movieCard}
+                                onPress={() => onMoviePress && onMoviePress(movie.id)}
+                                activeOpacity={0.8}
+                            >
+                                {movie.poster_path ? (
+                                    <Image
+                                        source={{ uri: `https://image.tmdb.org/t/p/w200${movie.poster_path}` }}
+                                        style={styles.moviePoster}
+                                    />
+                                ) : (
+                                    <View style={[styles.moviePoster, styles.noImagePoster]}>
+                                        <Ionicons name="film-outline" size={30} color="#64748B" />
+                                    </View>
+                                )}
+                                <Text style={styles.movieTitle} numberOfLines={2}>{movie.title}</Text>
+                                <View style={styles.movieRating}>
+                                    <Ionicons name="star" size={12} color="#FFD700" />
+                                    <Text style={styles.ratingText}>{movie.vote_average?.toFixed(1)}</Text>
+                                </View>
+                            </TouchableOpacity>
+                        ))}
+                    </ScrollView>
+                )}
             </View>
         );
     };
@@ -318,6 +355,48 @@ const styles = StyleSheet.create({
         height: 44,
         justifyContent: 'center',
         alignItems: 'center',
+    },
+    aiMessageContainer: {
+        marginBottom: 12,
+    },
+    movieCardsContainer: {
+        marginTop: 10,
+        marginLeft: 38,
+    },
+    movieCard: {
+        width: 110,
+        marginRight: 12,
+        backgroundColor: '#1E293B',
+        borderRadius: 12,
+        overflow: 'hidden',
+    },
+    moviePoster: {
+        width: 110,
+        height: 160,
+        backgroundColor: '#0A1628',
+    },
+    noImagePoster: {
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    movieTitle: {
+        color: '#fff',
+        fontSize: 12,
+        fontWeight: '600',
+        padding: 8,
+        paddingBottom: 4,
+    },
+    movieRating: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 4,
+        paddingHorizontal: 8,
+        paddingBottom: 8,
+    },
+    ratingText: {
+        color: '#FFD700',
+        fontSize: 11,
+        fontWeight: '600',
     },
 });
 
