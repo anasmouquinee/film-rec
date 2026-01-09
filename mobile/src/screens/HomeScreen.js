@@ -13,6 +13,14 @@ const HomeScreen = ({ navigation }) => {
     const { user } = useAuth();
     const [movies, setMovies] = useState([]);
     const [chatVisible, setChatVisible] = useState(false);
+    const [chatMessages, setChatMessages] = useState([
+        {
+            id: '1',
+            text: "Hey! 👋 I'm your movie buddy. Tell me what kind of movies you're in the mood for, and I'll find the perfect picks for you!",
+            isUser: false,
+            movies: [],
+        },
+    ]);
     const API_URL = API_BASE_URL;
 
     useEffect(() => {
@@ -91,6 +99,8 @@ const HomeScreen = ({ navigation }) => {
                             setChatVisible(false);
                             navigation.navigate('MovieDetail', { movieId });
                         }}
+                        messages={chatMessages}
+                        setMessages={setChatMessages}
                     />
                 </Modal>
             </SafeAreaView>

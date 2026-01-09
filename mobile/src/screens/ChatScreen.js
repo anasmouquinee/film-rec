@@ -18,15 +18,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '../context/AuthContext';
 import { API_BASE_URL } from '../config';
 
-const ChatScreen = ({ onClose, onMoviePress }) => {
+const ChatScreen = ({ onClose, onMoviePress, messages, setMessages }) => {
     const { user } = useAuth();
-    const [messages, setMessages] = useState([
-        {
-            id: '1',
-            text: "Hey! 👋 I'm your movie buddy. Tell me what kind of movies you're in the mood for, and I'll find the perfect picks for you!",
-            isUser: false,
-        },
-    ]);
     const [inputText, setInputText] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const flatListRef = useRef(null);
