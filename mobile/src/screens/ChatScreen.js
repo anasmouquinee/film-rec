@@ -48,7 +48,7 @@ const ChatScreen = ({ onClose }) => {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     message: userMessage.text,
-                    userId: user?.userId,
+                    userId: user?.id,
                 }),
             });
 
@@ -56,7 +56,7 @@ const ChatScreen = ({ onClose }) => {
 
             const aiMessage = {
                 id: (Date.now() + 1).toString(),
-                text: data.response || "Sorry, I couldn't process that. Try asking about movies!",
+                text: data.response || data.error || "Sorry, I couldn't process that. Try asking about movies!",
                 isUser: false,
             };
 
