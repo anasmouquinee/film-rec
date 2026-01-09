@@ -1,6 +1,7 @@
 const express = require('express');
 const neo4j = require('neo4j-driver');
 const cors = require('cors');
+const { GoogleGenerativeAI } = require('@google/generative-ai');
 require('dotenv').config();
 
 const app = express();
@@ -14,6 +15,10 @@ const driver = neo4j.driver(
   process.env.NEO4J_URI,
   neo4j.auth.basic(process.env.NEO4J_USER, process.env.NEO4J_PASSWORD)
 );
+
+// Gemini AI
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
 // Verify Connection
 const verifyConnection = async () => {
@@ -312,6 +317,67 @@ app.get('/api/discover', async (req, res) => {
     res.json(data);
   } catch (error) {
     res.status(500).json({ error: error.message });
+  }
+});
+
+// AI Chat - Movie Recommendations
+app.post('/api/chat', async (req, res) => {
+  const { message, userId } = req.body;
+  const session = driver.session();
+
+  try {
+    // Fetch user context from Neo4j
+    const likesResult = await session.run(`
+      MATCH (u:User {id: $userId})-[:LIKES]->(m:Film)
+      RETURN m.title AS title LIMIT 10
+    `, { userId });
+
+    const genresResult = await session.run(`
+      MATCH (u:User {id: $userId})-[:LIKES_GENRE]->(g:Genre)
+      RETURN g.name AS name
+    `, { userId });
+
+    const likedMovies = likesResult.records.map(r => r.get('title')).filter(Boolean);
+    const preferredGenres = genresResult.records.map(r => r.get('name')).filter(Boolean);
+
+    // Build context for AI
+    const userContext = `
+User's liked movies: ${likedMovies.length > 0 ? likedMovies.join(', ') : 'None yet'}
+User's preferred genres: ${preferredGenres.length > 0 ? preferredGenres.join(', ') : 'Not specified'}
+    `.trim();
+
+    const systemPrompt = `You are a friendly movie recommendation assistant for a film app. 
+Your job is to help users discover movies they'll love.
+
+${userContext}
+
+Guidelines:
+- Give short, conversational responses (2-3 sentences max)
+- Recommend 1-3 specific movies when asked
+- Consider the user's preferences when making recommendations
+- Be enthusiastic but concise
+- If asked about non-movie topics, politely redirect to movies
+
+When recommending movies, format each movie on its own line like this:
+🎬 Movie Title (Year) - Brief one-line description`;
+
+    const result = await model.generateContent([
+      { text: systemPrompt },
+      { text: message }
+    ]);
+
+    const response = result.response.text();
+
+    res.json({
+      success: true,
+      response,
+      context: { likedMovies: likedMovies.length, preferredGenres }
+    });
+  } catch (error) {
+    console.error('Chat error:', error);
+    res.status(500).json({ error: error.message });
+  } finally {
+    await session.close();
   }
 });
 
