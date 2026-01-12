@@ -240,10 +240,10 @@ app.delete('/api/user/likes/:userId/:movieId', async (req, res) => {
   console.log(`Attempting to delete like: User[${userId}] Movie[${movieId}]`);
 
   try {
-    // Robust delete: convert DB id to string for comparison
+    // Robust delete: convert DB id to integer then string (handles float storage)
     const result = await session.run(`
       MATCH (u:User {id: $userId})-[r:LIKES]->(m:Film)
-      WHERE toString(m.id) = $movieId
+      WHERE toString(toInteger(m.id)) = $movieId
       DELETE r
       RETURN count(r) as deletedCount
     `, { userId, movieId });
