@@ -233,6 +233,37 @@ app.get('/api/user/likes/:userId', async (req, res) => {
   }
 });
 
+// Delete User Like
+app.delete('/api/user/likes/:userId/:movieId', async (req, res) => {
+  const { userId, movieId } = req.params;
+  const session = driver.session();
+  console.log(`Attempting to delete like: User[${userId}] Movie[${movieId}]`);
+
+  try {
+    // Robust delete: convert DB id to string for comparison
+    const result = await session.run(`
+      MATCH (u:User {id: $userId})-[r:LIKES]->(m:Film)
+      WHERE toString(m.id) = $movieId
+      DELETE r
+      RETURN count(r) as deletedCount
+    `, { userId, movieId });
+
+    const deletedCount = result.records[0].get('deletedCount').toNumber();
+    console.log(`Deleted ${deletedCount} relationship(s).`);
+
+    if (deletedCount === 0) {
+      console.log("WARNING: No relationships deleted. Check IDs.");
+    }
+
+    res.json({ success: true, deletedCount });
+  } catch (error) {
+    console.error("Delete error:", error);
+    res.status(500).json({ error: error.message });
+  } finally {
+    await session.close();
+  }
+});
+
 // Get Recommendations
 app.get('/api/recommendations/:userId', async (req, res) => {
   const { userId } = req.params;
